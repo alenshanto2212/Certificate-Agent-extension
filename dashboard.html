@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Career Scout - Premium Blueprint Dashboard</title>
+  <style>
+    body {
+      background-color: #0f172a; /* Slate 900 */
+      color: #f8fafc;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 900px;
+      background: #1e293b; /* Slate 800 */
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+    h1 {
+      color: #10b981; /* Emerald Green */
+      margin-top: 0;
+      font-size: 2rem;
+      border-bottom: 2px solid #334155;
+      padding-bottom: 15px;
+    }
+    #loading-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 50px;
+    }
+    .spinner {
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border-left-color: #10b981;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .loading-text {
+      margin-top: 20px;
+      font-size: 1.2rem;
+      color: #94a3b8;
+    }
+    /* This is where the AI content will magically render */
+    #blueprint-output {
+      display: none;
+      line-height: 1.7;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>🎯 Your Custom AI Career Blueprint</h1>
+    
+    <div id="loading-zone">
+      <div class="spinner"></div>
+      <div class="loading-text">Gemini is analyzing your data tracking profiles...</div>
+    </div>
+
+    <div id="blueprint-output"></div>
+  </div>
+
+  <script>
+    // Execute as soon as the webpage opens
+    window.addEventListener('DOMContentLoaded', async () => {
+      const loadingZone = document.getElementById('loading-zone');
+      const outputZone = document.getElementById('blueprint-output');
+
+      // 1. Extract the tracking data passed from the popup URL window
+      const urlParams = new URLSearchParams(window.location.search);
+      const queryKeywords = urlParams.get('query');
+
+      if (!queryKeywords) {
+        loadingZone.innerHTML = "<p style='color: #ef4444;'>❌ No search queries found to analyze.</p>";
+        return;
+      }
+
+      try {
+        // 2. Fetch recommendations live from our local Python FastAPI Server
+        const response = await fetch(`http://localhost:8000/generate?query=${encodeURIComponent(queryKeywords)}`);
+        
+        if (!response.ok) throw new Error("Backend connection failed.");
+        
+        const data = await response.json();
+        
+        // 3. Turn off loading spinner and inject the beautiful HTML content directly
+        loadingZone.style.display = 'none';
+        outputZone.style.display = 'block';
+        outputZone.innerHTML = data.html_blueprint;
+
+      } catch (error) {
+        loadingZone.innerHTML = `
+          <p style='color: #ef4444; font-weight: bold;'>❌ Cannot connect to AI Engine.</p>
+          <p style='color: #94a3b8; font-size: 0.9rem;'>Make sure your Python FastAPI server is running locally on port 8000.</p>
+        `;
+      }
+    });
+  </script>
+</body>
+</html>
